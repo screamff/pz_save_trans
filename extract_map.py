@@ -26,12 +26,6 @@ def in_boundary_chunk(chunk_x, chunk_y, start_x, start_y, end_x, end_y):
 def extract_map(save_path, backup_path, start_x, start_y, end_x, end_y):
     """备份地图和物品数据"""
     # 兼容b42存档目录
-    files = Path.iterdir(save_path)
-    for file in files:
-        if file.name == 'WorldDictionary.bin':
-            # print(file.name)
-            shutil.copy(file, backup_path)
-
     if save_path.joinpath('map').exists():
         map_files = Path.iterdir(save_path.joinpath('map'))
         chunk_files = Path.iterdir(save_path.joinpath('chunkdata'))
@@ -43,6 +37,13 @@ def extract_map(save_path, backup_path, start_x, start_y, end_x, end_y):
     backup_chunk_path = backup_path.joinpath('chunkdata') if backup_path.joinpath('chunkdata').exists() else backup_path
     backup_map_path.mkdir(parents=True, exist_ok=True)
     backup_chunk_path.mkdir(parents=True, exist_ok=True)
+
+    # 复制地图和物品数据
+    files = Path.iterdir(save_path)
+    for file in files:
+        if file.name == 'WorldDictionary.bin':
+            # print(file.name)
+            shutil.copy(file, backup_path)
 
     for file in map_files:
         item = file.stem.split('_')
@@ -58,7 +59,15 @@ def extract_map(save_path, backup_path, start_x, start_y, end_x, end_y):
                 # print(file.name)
                 shutil.copy(file, backup_chunk_path)
 
+def clean_map(new_save_folder):
+    for file in new_save_folder.glob('**/*.bin'):
+        item = file.stem.split('_')
+        if (len(item) == 3 and item[0] == 'map') or (len(item) == 3 and item[0] == 'chunkdata'):
+            print(f'删除文件:{file.name}')
+            file.unlink()
+
 def trans_save(config, save_path, backup_path):
+    clean_map(backup_path)
     for region in config['regions']:
         print(f'正在复制地点:{region["name"]}')
         start_x = region['start'][0]
@@ -99,5 +108,6 @@ if __name__ == '__main__':
         print(f"文件夹 '{backup_path}' 创建成功！")
     else:
         print(f"文件夹 '{backup_path}' 已存在。")
+
 
     trans_save(config, save_path, backup_path)
